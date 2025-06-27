@@ -1,0 +1,58 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  vars:
+    auditd_local_rulesets: ["38-anssi","39-neo23x0"]
+    auditd_source_rulesets: ["30-stig","41-containers"]
+    auditd_custom_rules:
+      - "-a exit,always -F arch=b64 -S unlink -S rmdir -S rename -k fschange"
+      - "-a exit,always -F arch=b64 -S creat -S open -S openat -F exit=-EACCES -k fschange"
+      - "-a exit,always -F arch=b64 -S truncate -S ftruncate -F exit=-EACCES -k fschange"
+  tasks:
+
+  - name: check for auditd
+    stat:
+      path: /etc/audit/rules.d
+    register: p
+
+  - name: check auditd
+    assert:
+      that:
+        - p.stat.exists and p.stat.isdir
+
+  - name: check rules
+    command: ls /etc/audit/rules.d
+    register: rules
+
+  - name: check local rules
+    assert:
+      that:
+        - "item in rules.stdout"
+    loop: "{{ auditd_local_rulesets }}"
+
+  - name: check remote rules
+    assert:
+      that:
+        - "item in rules.stdout"
+    loop: "{{ auditd_source_rulesets }}"
+
+  - name: check custom rules
+    command: "grep -F -- '{{ item }}' /etc/audit/rules.d/98-custom.conf"
+    loop: "{{ auditd_custom_rules }}"
+    register: customrules
+  
+  - name: check custom rules
+    assert:
+      that:
+        - "item.rc == 0"
+    loop: "{{ customrules.results }}"
+
+  - name: service status - enabled
+    command: systemctl is-enabled auditd.service
+    register: status
+
+  - name: check service status
+    assert:
+      that:
+        - 'status.stdout == "enabled"'

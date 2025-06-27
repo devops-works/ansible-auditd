@@ -1,0 +1,37 @@
+---
+- name: Install auditd
+  ansible.builtin.package:
+    name: auditd
+    state: present
+    update_cache: yes
+
+- name: Add prepackaged auditd rules
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: /etc/audit/rules.d/{{ item | basename | regex_replace('\\.rules\\.j2$', '') }}.conf
+    mode: 0600
+    owner: root
+    group: root
+  when: "item | basename | regex_replace('\\.rules\\.j2$', '') in auditd_local_rulesets"
+  loop: "{{ lookup('fileglob', 'templates/*.rules.j2', wantlist=True) }}"
+  notify:
+    - Restart auditd
+
+- name: Add source auditd rules
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/linux-audit/audit-userspace/refs/heads/master/rules/{{ item }}.rules"
+    dest: /etc/audit/rules.d/{{ item }}.conf
+    mode: 0600
+    owner: root
+    group: root
+  loop: "{{ auditd_source_rulesets }}"
+  notify:
+    - Restart auditd
+
+- name: Add custom rules
+  ansible.builtin.template:
+    src: custom_rules.j2
+    dest: /etc/audit/rules.d/98-custom.conf
+    mode: 0600
+    owner: root
+    group: root

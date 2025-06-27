@@ -1,0 +1,7 @@
+---
+- name: Restart auditd
+  ansible.builtin.systemd_service:
+    state: restarted
+    daemon_reload: true
+    name: auditd
+  when: __sut is not defined

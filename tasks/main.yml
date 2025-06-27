@@ -1,0 +1,8 @@
+---
+- include_tasks:
+    file: auditd.yml
+    apply:
+      tags:
+        - auditd
+  tags:
+    - always

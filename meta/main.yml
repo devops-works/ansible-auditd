@@ -1,0 +1,20 @@
+---
+dependencies: []
+
+galaxy_info:
+  author: Michel Blanc
+  company: devops.works
+  namespace: devopsworks
+  role_name: auditd
+  description: ansible-auditd role (https://gitlab.com/devopsworks/tools/auditd)
+  license: MIT
+  min_ansible_version: "2.4"
+  platforms:
+  - name: Ubuntu
+    versions:
+    - all
+  - name: Debian
+    versions:
+    - all
+  galaxy_tags:
+  - system

@@ -1,0 +1,30 @@
+# ANSSI R73 RECOMMANDATIONS DE CONFIGURATION D'UN SYSTÈME GNU/LINUX v2.0
+# https://cyber.gouv.fr/publications/recommandations-de-securite-relatives-un-systeme-gnulinux
+# Module management
+-w /sbin/insmod -p x -k module
+-w /sbin/modprobe -p x -k module
+-w /sbin/rmmod -p x -k module
+# On recent GNU/Linux distributions, insmod , rmmod & modprobe are symlinks
+# to kmod
+-w /bin/kmod -p x -k module
+# Check changes in /etc/
+-w /etc/ -p wa  -k config
+# Check {u,}mounts
+-a exit,always -S mount -S umount2 -k mount
+# suspicious x86 syscalls
+-a exit,always -S ioperm -S modify_ldt -k syscall
+# syscalls that need to be checked
+-a exit,always -S get_kernel_syms -S ptrace -k syscall
+-a exit,always -S prctl -k syscall
+# File creation & removal
+# Might have big impact on system performance
+-a exit,always -F arch=b64 -S unlink -S rmdir -S rename -k fschange
+-a exit,always -F arch=b64 -S creat -S open -S openat -F exit=-EACCES -k fschange
+-a exit,always -F arch=b64 -S truncate -S ftruncate -F exit=-EACCES -k fschange
+# kernel module changes (?)
+-a exit,always -F arch=b64 -S init_module -S delete_module -k module
+-a exit,always -F arch=b64 -S finit_module -k module
+# auditd config lock
+# Packager notes: locking is comment out for operational safety; use a custom
+# config if you want this.
+# -e 2
